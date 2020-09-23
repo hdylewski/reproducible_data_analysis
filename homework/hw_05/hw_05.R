@@ -27,5 +27,5 @@ print (tail_num_carriers)
 ## Same result using pipes 
 Plain_and_carrier <- flights %>%
   group_by(tailnum, carrier) %>%
-  summarize(tail_num_group, number_of_flights = n())
-
+  summarise(number_of_flights = n())
+print(Plain_and_carrier)

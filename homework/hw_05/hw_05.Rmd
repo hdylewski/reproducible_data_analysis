@@ -3,7 +3,7 @@ title: "hw_05"
 output: github_document
 ---
 
-This homework is practice for splitting and grouping data frames
+This homework is practice for splitting and grouping data frames. Ultimately flight data is reformatted and grouped, showing late flights and flights by carrier for each plane
 
 
 The code below imports libraries and data to be processed, and checks the structure of the data to be analyzed
@@ -43,5 +43,6 @@ Same result using pipes
 ```{r}
 Plain_and_carrier <- flights %>%
   group_by(tailnum, carrier) %>%
-  summarize(tail_num_group, number_of_flights = n())
+  summarize(number_of_flights = n())
+  print(Plain_and_carrier)
 ```
