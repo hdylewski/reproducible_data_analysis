@@ -1,0 +1,296 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={hw\_05},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{hw\_05}
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+\maketitle
+
+This homework is practice for splittign and grouping data frames
+
+The code below imports libraries and data to be processed, and checks
+the structure of the data to be analyzed
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(nycflights13)}
+\KeywordTok{library}\NormalTok{(tidyverse)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## -- Attaching packages ---------------- tidyverse 1.3.0 --
+\end{verbatim}
+
+\begin{verbatim}
+## v ggplot2 3.3.2     v purrr   0.3.4
+## v tibble  3.0.3     v dplyr   1.0.2
+## v tidyr   1.1.2     v stringr 1.4.0
+## v readr   1.3.1     v forcats 0.5.0
+\end{verbatim}
+
+\begin{verbatim}
+## -- Conflicts ------------------- tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{?nycflights13}\OperatorTok{::}\NormalTok{flights}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## starting httpd help server ...
+\end{verbatim}
+
+\begin{verbatim}
+##  done
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{glimpse}\NormalTok{(flights)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Rows: 336,776
+## Columns: 19
+## $ year           <int> 2013, 2013, 2013, 2013, 2013, 2013, 2013, 2013, 2013...
+## $ month          <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...
+## $ day            <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...
+## $ dep_time       <int> 517, 533, 542, 544, 554, 554, 555, 557, 557, 558, 55...
+## $ sched_dep_time <int> 515, 529, 540, 545, 600, 558, 600, 600, 600, 600, 60...
+## $ dep_delay      <dbl> 2, 4, 2, -1, -6, -4, -5, -3, -3, -2, -2, -2, -2, -2,...
+## $ arr_time       <int> 830, 850, 923, 1004, 812, 740, 913, 709, 838, 753, 8...
+## $ sched_arr_time <int> 819, 830, 850, 1022, 837, 728, 854, 723, 846, 745, 8...
+## $ arr_delay      <dbl> 11, 20, 33, -18, -25, 12, 19, -14, -8, 8, -2, -3, 7,...
+## $ carrier        <chr> "UA", "UA", "AA", "B6", "DL", "UA", "B6", "EV", "B6"...
+## $ flight         <int> 1545, 1714, 1141, 725, 461, 1696, 507, 5708, 79, 301...
+## $ tailnum        <chr> "N14228", "N24211", "N619AA", "N804JB", "N668DN", "N...
+## $ origin         <chr> "EWR", "LGA", "JFK", "JFK", "LGA", "EWR", "EWR", "LG...
+## $ dest           <chr> "IAH", "IAH", "MIA", "BQN", "ATL", "ORD", "FLL", "IA...
+## $ air_time       <dbl> 227, 227, 160, 183, 116, 150, 158, 53, 140, 138, 149...
+## $ distance       <dbl> 1400, 1416, 1089, 1576, 762, 719, 1065, 229, 944, 73...
+## $ hour           <dbl> 5, 5, 5, 5, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 6, 6...
+## $ minute         <dbl> 15, 29, 40, 45, 0, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 59...
+## $ time_hour      <dttm> 2013-01-01 05:00:00, 2013-01-01 05:00:00, 2013-01-0...
+\end{verbatim}
+
+Gathers flights that were more than 2hrs later departing into a new data
+frame
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{##gather flights that are at least 2hrs late}
+\NormalTok{flights_2hr_late <-}\StringTok{ }\KeywordTok{filter}\NormalTok{(flights, dep_delay }\OperatorTok{>=}\StringTok{ }\DecValTok{120}\NormalTok{)}
+\KeywordTok{glimpse}\NormalTok{(flights_2hr_late)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Rows: 9,888
+## Columns: 19
+## $ year           <int> 2013, 2013, 2013, 2013, 2013, 2013, 2013, 2013, 2013...
+## $ month          <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...
+## $ day            <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2...
+## $ dep_time       <int> 848, 957, 1114, 1540, 1815, 1842, 1856, 1934, 1938, ...
+## $ sched_dep_time <int> 1835, 733, 900, 1338, 1325, 1422, 1645, 1725, 1703, ...
+## $ dep_delay      <dbl> 853, 144, 134, 122, 290, 260, 131, 129, 155, 157, 21...
+## $ arr_time       <int> 1001, 1056, 1447, 2020, 2120, 1958, 2212, 2126, 2109...
+## $ sched_arr_time <int> 1950, 853, 1222, 1825, 1542, 1535, 2005, 1855, 1823,...
+## $ arr_delay      <dbl> 851, 123, 145, 115, 338, 263, 127, 151, 166, 174, 22...
+## $ carrier        <chr> "MQ", "UA", "UA", "B6", "EV", "EV", "AA", "MQ", "EV"...
+## $ flight         <int> 3944, 856, 1086, 705, 4417, 4633, 181, 4255, 4300, 4...
+## $ tailnum        <chr> "N942MQ", "N534UA", "N76502", "N570JB", "N17185", "N...
+## $ origin         <chr> "JFK", "EWR", "LGA", "JFK", "EWR", "EWR", "JFK", "JF...
+## $ dest           <chr> "BWI", "BOS", "IAH", "SJU", "OMA", "BTV", "LAX", "BN...
+## $ air_time       <dbl> 41, 37, 248, 193, 213, 46, 336, 154, 68, 60, 121, 65...
+## $ distance       <dbl> 184, 200, 1416, 1598, 1134, 266, 2475, 765, 277, 213...
+## $ hour           <dbl> 18, 7, 9, 13, 13, 14, 16, 17, 17, 17, 16, 18, 17, 17...
+## $ minute         <dbl> 35, 33, 0, 38, 25, 22, 45, 25, 3, 5, 30, 8, 0, 20, 0...
+## $ time_hour      <dttm> 2013-01-01 18:00:00, 2013-01-01 07:00:00, 2013-01-0...
+\end{verbatim}
+
+Creates and new data frame with airline and flight number combined in a
+new column
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{##flights with combined airline and flight number}
+\NormalTok{flights_airline_num <-}\StringTok{ }\KeywordTok{mutate}\NormalTok{(flights, }\DataTypeTok{airline_flight_num =} \KeywordTok{paste0}\NormalTok{(carrier, flight))}
+\KeywordTok{glimpse}\NormalTok{(flights_airline_num)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Rows: 336,776
+## Columns: 20
+## $ year               <int> 2013, 2013, 2013, 2013, 2013, 2013, 2013, 2013, ...
+## $ month              <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+## $ day                <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+## $ dep_time           <int> 517, 533, 542, 544, 554, 554, 555, 557, 557, 558...
+## $ sched_dep_time     <int> 515, 529, 540, 545, 600, 558, 600, 600, 600, 600...
+## $ dep_delay          <dbl> 2, 4, 2, -1, -6, -4, -5, -3, -3, -2, -2, -2, -2,...
+## $ arr_time           <int> 830, 850, 923, 1004, 812, 740, 913, 709, 838, 75...
+## $ sched_arr_time     <int> 819, 830, 850, 1022, 837, 728, 854, 723, 846, 74...
+## $ arr_delay          <dbl> 11, 20, 33, -18, -25, 12, 19, -14, -8, 8, -2, -3...
+## $ carrier            <chr> "UA", "UA", "AA", "B6", "DL", "UA", "B6", "EV", ...
+## $ flight             <int> 1545, 1714, 1141, 725, 461, 1696, 507, 5708, 79,...
+## $ tailnum            <chr> "N14228", "N24211", "N619AA", "N804JB", "N668DN"...
+## $ origin             <chr> "EWR", "LGA", "JFK", "JFK", "LGA", "EWR", "EWR",...
+## $ dest               <chr> "IAH", "IAH", "MIA", "BQN", "ATL", "ORD", "FLL",...
+## $ air_time           <dbl> 227, 227, 160, 183, 116, 150, 158, 53, 140, 138,...
+## $ distance           <dbl> 1400, 1416, 1089, 1576, 762, 719, 1065, 229, 944...
+## $ hour               <dbl> 5, 5, 5, 5, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, ...
+## $ minute             <dbl> 15, 29, 40, 45, 0, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0...
+## $ time_hour          <dttm> 2013-01-01 05:00:00, 2013-01-01 05:00:00, 2013-...
+## $ airline_flight_num <chr> "UA1545", "UA1714", "AA1141", "B6725", "DL461", ...
+\end{verbatim}
+
+Created a new data frame displaying flights per carrier for each
+tailnumber. This is done by first grouping the flight data by
+tailnumber, then by carrier and creates a new data frame desplaying the
+group size of tailnumber by carrier
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{## group flight data by tailnumber then by carrier}
+\NormalTok{tail_num_group <-}\StringTok{ }\KeywordTok{group_by}\NormalTok{(flights, tailnum, carrier)}
+
+\CommentTok{## make tibble showing flights per carrier for each tailnumber aka number_of_flights}
+\NormalTok{tail_num_carriers =}\StringTok{ }\KeywordTok{summarize}\NormalTok{(tail_num_group, }\DataTypeTok{number_of_flights =} \KeywordTok{n}\NormalTok{() )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## `summarise()` regrouping output by 'tailnum' (override with `.groups` argument)
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{print}\NormalTok{ (tail_num_carriers)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 4,067 x 3
+## # Groups:   tailnum [4,044]
+##    tailnum carrier number_of_flights
+##    <chr>   <chr>               <int>
+##  1 D942DN  DL                      4
+##  2 N0EGMQ  MQ                    371
+##  3 N10156  EV                    153
+##  4 N102UW  US                     48
+##  5 N103US  US                     46
+##  6 N104UW  US                     47
+##  7 N10575  EV                    289
+##  8 N105UW  US                     45
+##  9 N107US  US                     41
+## 10 N108UW  US                     60
+## # ... with 4,057 more rows
+\end{verbatim}
+
+\end{document}

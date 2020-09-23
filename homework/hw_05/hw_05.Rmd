@@ -1,0 +1,42 @@
+---
+title: "hw_05"
+output: github_document
+---
+
+This homework is practice for splitting and grouping data frames
+
+
+The code below imports libraries and data to be processed, and checks the structure of the data to be analyzed
+```{r}
+library(nycflights13)
+library(tidyverse)
+
+?nycflights13::flights
+
+```
+
+Gathers flights that were more than 2hrs later departing into a new data frame
+```{r}
+##gather flights that are at least 2hrs late
+flights_2hr_late <- filter(flights, dep_delay >= 120)
+print(flights_2hr_late)
+```
+
+Creates and new data frame with airline and flight number combined in a new column
+```{r}
+##flights with combined airline and flight number
+flights_airline_num <- mutate(flights, airline_flight_num = paste0(carrier, flight))
+print(flights_airline_num)
+```
+
+Created a new data frame displaying flights per carrier for each tailnumber. 
+This is done by first grouping the flight data by tailnumber, then by carrier and creates a new data frame desplaying the group size of tailnumber by carrier
+```{r}
+## group flight data by tailnumber then by carrier
+tail_num_group <- group_by(flights, tailnum, carrier)
+
+## make tibble showing flights per carrier for each tailnumber aka number_of_flights
+tail_num_carriers = summarize(tail_num_group, number_of_flights = n() )
+print (tail_num_carriers)
+```
+
