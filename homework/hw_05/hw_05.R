@@ -24,3 +24,8 @@ tail_num_group <- group_by(flights, tailnum, carrier)
 tail_num_carriers = summarize(tail_num_group, number_of_flights = n() )
 print (tail_num_carriers)
 
+## Same result using pipes 
+Plain_and_carrier <- flights %>%
+  group_by(tailnum, carrier) %>%
+  summarize(tail_num_group, number_of_flights = n())
+
