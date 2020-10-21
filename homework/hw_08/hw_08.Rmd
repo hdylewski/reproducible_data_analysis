@@ -1,0 +1,296 @@
+---
+title: "hw_08"
+author: "Haley Dylewski"
+date: "10/14/2020"
+output: github_document
+---
+
+Purpose:
+
+This document provides results of practice with 1) list element access and manipulation using base R style as well as the tidyverse 2) Factors and vector conversion to/from factors 3). Part 2 includes exploratory data analysis of the nycflights13 data set with walk through and explanation. 
+
+_________________________________________________
+_________________________________________________
+
+Task 1: Accessing list elements
+
+_________________________________________________
+Create a list using list() with at least 3 named elements
+
+```{r}
+library(tidyverse)
+
+
+my_list <- list(c("Yellow","Purple", "Rice"), c(16, 25), list(FALSE, 18))
+
+names(my_list) <- c("Some Text", "Lucky Numbers", "Extra Data")
+
+str(my_list)
+```
+Access the 1st element by name
+```{r}
+my_list[["Some Text"]]
+```
+Access the 2nd element using [[, 
+```{r}
+my_list[[2]]
+```
+
+Access the 3rd element as a list using [
+
+```{r}
+my_list[3]
+
+```
+_________________________________________________
+
+Using mtcars
+
+```{r}
+str(mtcars)
+```
+
+Access mpg column by name(2 ways) and [[ syntax
+
+```{r}
+mtcars[["mpg"]]
+mtcars$mpg
+mtcars[[1]]
+```
+
+Use base R to create a new column for 'displacement per cylinder', that contains the engine displacement divided by number of cylinders
+
+```{r}
+mtcars_base <- mtcars
+mtcars_base$diplacement_per_cylinder<- round( mtcars_base$disp/mtcars_base$cyl)
+glimpse(mtcars_base)
+
+
+```
+
+Create a single column data frame using tidyverse mutate() function
+```{r}
+mtcars_tidy <- mutate(mtcars, "Displacement by cylinder" = round(disp/cyl))
+
+glimpse(mtcars_tidy)
+
+```
+What is the difference between these resulting vector and tibble?
+
+_________________________________________________
+_________________________________________________
+
+Task 2: Factors
+
+_________________________________________________
+
+Create a numeric vector
+
+```{r}
+```
+
+
+```{r}
+num.vec <- c(3, 4, 1, 5)
+glimpse(num.vec)
+```
+
+Use as.factor() to convert this to a factor
+
+```{r}
+
+fac.num.vec <- as.factor(num.vec)
+glimpse(fac.num.vec)
+```
+
+Use as.numeric to convert this back to a numeric vector
+```{r}
+num.vec.2 <- as.numeric(fac.num.vec)
+glimpse(num.vec.2)
+```
+What happened here?
+
+
+It looks like the numbers were given factor levels based on their numerical value in increasing order. When converted to a numeric, the corresponding factor values were kept instead of the original values. 
+
+_________________________________________________
+_________________________________________________
+
+Task 3: Exploratory data analysis
+
+_________________________________________________
+
+I have decided to work with the nycflights dataset. Thise data set gives information on flights that departed from new york city. 
+```{r}
+library(nycflights13)
+
+glimpse(flights)
+```
+
+_________________________________________________
+
+Flight origins
+
+_________________________________________________
+
+First, I am interested to see which originating airport in NYC had the most air traffic in each month.
+
+Creating a new data table that shows the number of flights for each origin location and month.
+```{r}
+origin_data <- flights %>%
+  group_by(origin,month)%>%
+  summarize(number_of_flights = n())
+glimpse(origin_data)
+```
+
+From this data frame, the number of flights per month was plotted for each origin location
+```{r}
+ggplot(origin_data, aes(x = month, y = number_of_flights, color = origin)) + 
+  geom_line() + geom_point() + 
+  xlim(1,12) + scale_x_discrete(name = "Month", limits = c(1:12,1)) + scale_y_continuous(name = "Number of flights", labels=waiver())
+
+```
+We can see that EWR airport had the most flights in every month of the year. Interestingly, in the 9-11th month flights dropped from JFK and rose from LGA. 
+
+
+_________________________________________________
+
+Flight destinations
+
+_________________________________________________
+
+
+Next, it will be interesting to see where these flights are destined and if there is a seasonality to these destinations.
+
+Creating a new data table that shows the number of flights for each origin location and month.
+
+
+```{r}
+dest_data <- flights %>%
+  group_by(dest,month)%>%
+  summarize(number_of_flights = n())
+glimpse(dest_data)
+```
+
+
+Similar to with flight origin, we can create a plot showing flight count for each destination over 2013. There is 105 destinations this time so it is unlikely this will be a successful plot.
+
+```{r}
+ggplot(dest_data, aes(x = month, y = number_of_flights, color = dest)) + 
+  geom_line() + geom_point() + 
+  xlim(1,12) + scale_x_discrete(name = "Month", limits = c(1:12,1)) + scale_y_continuous(name = "Number of flights", labels=waiver())
+
+```
+
+
+
+As expected, this plot is a mess. The most visited destinations would likely have the most significance in a real world scenario, so let's start there. 
+
+We cans start by sorting our data set by flight numbers to get a quick overview.
+
+```{r}
+sort_flights <- dest_data[order(-dest_data[,3]),]
+print(sort_flights)
+```
+
+
+From this table we can see that the top destinations are Chicago, Atlanta, and LA. 
+
+To further examine, we can see how flights fluctuate over the year as we did with the flight origins earlier. 
+First creating a new table containing only data for these destinations
+```{r}
+top_dest <- filter(dest_data, dest == "ORD" | dest == "ATL" | dest == "LAX")
+
+glimpse(top_dest)
+```
+
+Then making a plot.
+```{r}
+ggplot(top_dest, aes(x = month, y = number_of_flights, color = dest)) + 
+  geom_line() + geom_point() + 
+  xlim(1,12) + scale_x_discrete(name = "Month", limits = c(1:12,1)) + scale_y_continuous(name = "Number of flights", labels=waiver())
+
+```
+
+Flights to these locations follow a similar overall trend in number of flights as the origin plot. Interestingly flights to Chicago peak in the summer months, and last until late fall, with a dramatic drop off in the winter months. This could be do to the notoriously cold winter weather, but with this data set we cannot conclude any connection. 
+
+Now it would be interesting to see how other destinations compare, adding a few extra we may be familiar with. Lets add Knoxville and the destination Orlando Florida to the mix.
+
+```{r}
+more_dest <- dest_data %>% 
+  filter(dest == "ORD" | dest == "ATL" | dest == "LAX" | dest == "MCO" | dest == "TYS") %>%
+  ggplot(aes(x = month, y = number_of_flights, color = dest)) + 
+  geom_line() + geom_point() + 
+  xlim(1,12) + scale_x_discrete(name = "Month", limits = c(1:12,1)) + scale_y_continuous(name = "Number of flights", labels=waiver())
+more_dest 
+```
+
+Knoxville is hard to see on this scale so lets add an extra plot for it. 
+```{r}
+Knox_flights<- dest_data %>% 
+  filter(dest == "TYS") %>%
+   ggplot(aes(x = month, y = number_of_flights, color = dest)) + 
+  geom_line() + geom_point() + 
+  xlim(1,12) + scale_x_discrete(name = "Month", limits = c(1:12,1)) + scale_y_continuous(name = "Number of flights", labels=waiver())
+Knox_flights
+```
+From these two data plots, we an conclude that the previous assumption that all destinations would follow a similar trend for incoming flight numbers was wrong, and that each destination would have be evaluated individually to see the fine picture here. But we are interested in other things, so lets do one final analysis.
+
+__________________________________________________
+
+Flights to Knoxville (TYS)
+_________________________________________________
+
+Now that we are looking at TYS flight data. Let's look into late flights. How many flights are late vs on time.
+
+We begin our analysis by creating a table with the relevant information (delay amount, flight, carrier, month)
+```{r}
+Tys_flights <- flights %>%
+  filter(dest == "TYS") %>%
+  select(arr_delay, flight, carrier, month) %>%
+  glimpse()
+```  
+First let's look at the number of flights that have been late vs on time. We can make a plot showing flights that are on time, <30mins late, 30 mins-2hrs late, and more than 2hr late and compare to total flights. 
+
+First, make a table called tys_delays that contain the number of flights that were late by the above described time for each month. 
+```{r}
+tys_delays = tys_on_time <- Tys_flights %>% 
+  filter(arr_delay <= 0) %>%
+  group_by(month)%>%
+  summarize('On time' = n())
+
+ tys_late_30 <- Tys_flights %>% 
+  filter(arr_delay < 30) %>%
+  group_by(month)%>%
+  summarize("30 min" = n()) %>%
+  select("30 min")
+tys_delays$"30 min or less" = tys_late_30$`30 min`
+
+ tys_late_120 <- Tys_flights %>% 
+  filter( arr_delay >= 30 && arr_delay <120) %>%
+  group_by(month) %>%
+  summarize("30 min -> 2 hrs" = n()) %>% 
+  select("30 min -> 2 hrs")
+tys_delays$"30 min -> 2 hrs" = tys_late_120$`30 min -> 2 hrs`
+
+tys_very_late<- Tys_flights %>%
+  filter(arr_delay >= 120) %>%
+  group_by(month )%>%
+  summarize("Over 2hrs" = n()) %>%
+  select("Over 2hrs" )
+tys_delays$"Over 2hrs" = tys_very_late$`Over 2hrs`
+
+glimpse(tys_delays)
+```
+*A note about the above code: I created sub-tables for each time point and then assigned the collumn of interest to my new tys_delays data frame. I was unable to do this in a single step without the data frame elements becoming tibbles instead of a vector of ints.*
+
+Plotting this data
+
+```{r}
+   tys_delays_plot <- tys_delays %>%
+  ggplot()+ geom_line(aes(x = month, y = `On time`,color="pcs")) + geom_line(aes(x = month , y = `30 min or less`, color="30 min or less")) + geom_line(aes(x = month , y = `30 min -> 2 hrs`,col="30 min - 2hrs")) +   geom_line(aes(x = month, y = `Over 2hrs`,col="Over 2hrs")) + xlim(1,12) +  scale_x_discrete(name = "Month", limits = c(1:12,1)) + scale_y_continuous(name = "Number of flights", labels=waiver()) + scale_color_discrete(name = "Flight Delay",labels = c("On Time", "30 mins or less", "30 mins -> 2hrs", "2hrs+") )
+tys_delays_plot
+```
+
+For the most part, the most abundant group of flights are on time. We can see that there are many late flights and a surprising amount of very later (2hr+) flights. 
+From this plot, and the current depth of analysis, it is not obvious if a majority of the flights were late or on time.I had planned on looking into this but the current analysis took me longer than expected, so this analysis ends here.

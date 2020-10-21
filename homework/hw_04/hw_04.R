@@ -18,7 +18,7 @@ glimpse(chris_data)
 #tidy up data
 chris_data_tidy <- chris_data %>%
   pivot_longer(cols = -year, names_to = 'gender', values_to = "number.babies")
-  glimpse(chris_data_tidy)
+glimpse(chris_data_tidy)
 
 
 # generate a line plot. 
@@ -35,3 +35,4 @@ ggplot(data = chris_data_tidy) +
 # format: x_axis = sex, y-axis = #babies, color coded for gender
 ggplot(data = chris_data_tidy) + 
   geom_boxplot(mapping = aes(x= gender, y = number.babies, color = gender))
+
