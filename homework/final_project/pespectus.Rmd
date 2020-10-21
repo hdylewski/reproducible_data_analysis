@@ -1,0 +1,12 @@
+---
+title: "Final project perspectus"
+author: "Haley Dylewski"
+date: "10/21/2020"
+output: github_document
+---
+
+ Group members: Frank, Trystan, Haley
+ 
+ For our final project, we aim to create an R package that can conduct analyses of growing microbial culture and bacterial population relative abundance data. Regarding data obtained from microbial cultures, we will enable our package to integrate excel data tables, statistically process the encoded data, and generate scatter/line plots that will display data in time vs. cell count format. The data used for this will include data that Frank has collected in the Buchan lab on the bacterial species Sulfitobacter sp. CB-D.
+
+Additionally, we also aim to create a package that can perform analyses of many different types of abundance data. In the future, we hope to use this package to analyze data that Trystan will collect from the McKinney lab studying concentrations and bioaccumulation of heavy metals in aquatic and terrestrial organisms. This data is not time-specific, so it is important that we also create a package where abundance is not reliant on a time variable.
