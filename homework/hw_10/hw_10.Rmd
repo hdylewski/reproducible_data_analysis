@@ -1,0 +1,49 @@
+---
+title: "hw_10"
+author: "Haley Dylewski"
+date: "10/26/2020"
+output: github_document
+---
+
+_____________________________________________________
+
+Linear Models
+
+____________________________________________________
+
+Part1: Using the diamonds dataset, create a linear model of price as a function of the weight of the diamond (carat).
+```{r}
+library(tidyverse)
+
+
+carrot_weight_mod <- lm(price ~ carat, data = diamonds)
+
+cost_1carrot <- carrot_weight_mod$coefficients[2]*1 + carrot_weight_mod$coefficients[1]
+print(paste0("The cost of one carrot is estimated at $", round(cost_1carrot, digits = 2)))
+
+```
+Part 2: Now create a linear model of price as a function of carat and color.
+What difference does it make if you convert color to a character vector before you make the model? Note that this is probably what you want to do in general, unless you really know what you’re doing.
+
+model without converion to character first
+```{r}
+lm(price ~ color, data = diamonds)
+
+
+```
+
+After conversion to character
+
+```{r}
+ch.color <- as.character(diamonds$color)
+lm(price ~ ch.color, data = diamonds)
+
+```
+The linear regressions change significantly when not converted to a character. This is likely due to the color being stored as a factor, changing the calculation
+
+```{r}
+
+```
+
+
+

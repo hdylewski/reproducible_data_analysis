@@ -1,0 +1,293 @@
+---
+title: "hw_09"
+author: "Haley Dylewski"
+date: "10/26/2020"
+output: github_document
+---
+
+
+_________________________________________________________
+
+Write functions that compute the variance and skewness of  numeric vector
+
+_________________________________________________________
+
+This function calculates variance of a vector
+
+Given the equation for varience is
+Var(x) = (1/n-1)*sum((xi-X)^2, i=1 to n)
+where X is the mean and n is the number of data points
+```{r}
+library(tidyverse)
+
+variance <- function(x){
+n <- length(x)
+X_bar <- mean(x)
+var_sum <- 0
+i <- 1
+for (i in seq_along(x)){
+  var_sum <- var_sum + ((x[i]-X_bar)^2)
+}
+
+Var = (1/(n-1))*sum
+Var
+}
+
+example <-c(1,2,3,4,5,6,7)
+p<- variance(example)
+p
+```
+
+This function calculates the skew of a vector
+
+Given the equation for skew is
+skew = ((1/n-2)*sum((x1-X)^3, i=1 to n))/(var(x)^3/2)
+```{r}
+skew_calculator <- function(x){
+n <- length(x)
+X_bar <- mean(x)
+X_bar
+sk_sum <- 0
+i <- 1
+
+for (i in seq_along(x)) {
+  sk_sum <- sk_sum + (x[i]- X_bar)^3
+}
+
+var <- variance(x)
+skew <- ((1/n-2)*sk_sum)/(var^(3/2))
+
+}
+```
+
+Sample data set and function calls
+
+```{r}
+sample <- c(1,2,3,4,5,6,7,8,9,10)
+sample_var <- variance(sample)
+sample_var
+sample_skew <- skew_calculator(sample)
+sample_skew
+
+```
+
+_______________________________________________________
+
+Write both_na function that takes two vectors of the same length and returns the number of position in both that have an NA.
+________________________________________________________
+
+both_na()
+
+
+```{r}
+NA_counter <- function(x,y){
+x_NA <-sum(is.na(x))
+y_NA <-sum(is.na(y))
+print(paste0("Total NA in vector 1 = ", x_NA))
+print(paste0("Total NA in vector 2 = ", y_NA))
+}
+
+```
+Sample data and function call
+
+
+```{r}
+N <- 10
+x_num <- round(rnorm(N, 0, 5))
+x_num[rbinom(N, 1, 0.2) == 1] <- NA 
+x_num
+
+
+M<-10
+y_num <- round(rnorm(N, 0, 5))
+y_num[rbinom(M, 1, 0.2) == 1] <- NA 
+y_num
+
+NA_counter(x_num,y_num)
+```
+
+
+________________________________________________________
+
+Write a function to create a specific kind of plot, with useful labels that can take a data frame as an argument
+
+
+function for plotting flight data. The data to plot is the only variable passed in. The function code can be easily changed for repurposing. 
+________________________________________________________
+```{r}
+flight_plot <- function (in_data){
+  x_axis <- in_data$month
+  x_title <- in_data$number_of_flights
+  x_lim <- c(1:12,1)
+  treatement<- in_data$dest
+  y_title <- "Month"
+  y_axis <- "Number of flights"
+
+
+  
+ggplot(top_dest, aes(x = month, y = number_of_flights, color = treatement)) + 
+  geom_line() + geom_point() + 
+  xlim(1,12) + scale_x_discrete(name = y_title, limits = x_lim) + scale_y_continuous(name = y_axis, labels=waiver())
+}
+
+
+```
+Sample data and function call
+```{r}
+
+dest_data <- flights %>%
+  group_by(dest,month)%>%
+  summarize(number_of_flights = n())
+top_dest <- filter(dest_data, dest == "ORD" | dest == "ATL" | dest == "LAX")
+
+flight_plot(top_dest)
+```
+
+_______________________________________________________
+
+Write a function that takes one argument and does the following:
+if the argument is a numeric vector, multiplies every number in the vector by 2
+if the argument is a character vector, sorts the vector into alphabetical order
+if the argument is anything else, issues an informative warning and returns the argument unchanged
+
+_______________________________________________________
+
+
+```{r}
+
+num_vect <- c(1,2,3)
+char_vect <- c('z','a','b','c')
+bool_vect <- c(TRUE, FALSE, TRUE)
+
+x <- bool_vect
+
+vector_mod <- function(x){
+class <- class(x)
+
+if (class == "numeric"){
+  x = x*2
+  
+}else if (class == "character"){
+  x <- sort(x)
+  
+}else{
+ warning("WARNING: Vector of invalid class")
+  x <- x
+}
+
+}
+
+```
+Sample data and function call
+
+```{r}
+
+print("Modified numerical: ")
+num.vect <- c(1,2,3)
+num.mod <- vector_mod(num_vect)
+num.mod
+
+print("Modified character:")
+char.vect <- c('z','a','b','c')
+char.mod <- vector_mod(char_vect)
+char.mod
+
+print("Modified logical: ")
+bool.vect <- c(TRUE, FALSE, TRUE)
+logi.mod <- vector_mod(bool_vect)
+logi.mod
+```
+_______________________________________________________
+
+Write a function that tries to calculate the mean of a vector using mean(). If that is successful, it returns the mean of the vector. If mean() throws an error, it issues an informative message and returns the input intact.
+
+This function uses tryCatch to identify errors/warnings, if none are encountered it returns the completed calculation of the passed argument as X_bar
+_______________________________________________________
+
+```{r}
+
+error_catcher <- function(code) {
+  tryCatch(code,
+    error = function(c) "error: Mean cannot be calculated",
+    warning = function(c) "warning: Argument is not numeric or logical",
+    finally = function(c) X_bar <- code
+  )
+}
+```
+
+Test condition and function call
+
+```{r}
+num_vect <- c(1,2,3)
+char_vect <- c('z','a','b','c')
+bool_vect <- c(TRUE, FALSE, TRUE)
+
+
+error_catcher(mean(num_vect))
+error_catcher(mean(char_vect))
+error_catcher(mean(bool_vect))
+```
+Note that this function does not stop the averaging of logical since these are stored in memory as integers and so do not throw a warning or error. 
+
+_______________________________________________________
+
+Use system.time() (or, if you want to be more advanced about it, the bench or microbenchmark packages) to compare how long it takes to add two, 1-million-element random vectors and store the result in a third vector: a. Using the vectorized sum() operation 
+b. Using a for loop with a pre-allocated vector to store the results 
+c. Using a for loop without pre-allocating a vector to store the results
+
+_______________________________________________________
+
+Create vectors and call microbenchmark library
+
+```{r}
+library(microbenchmark)
+
+v1 <- runif(n = 1000000, min = 1, max = 100)
+v2 <-runif(n = 1000000, min = 1, max = 10)
+
+
+```
+
+
+Part a: using vectorized sum().
+```{r}
+microbenchmark(
+  sum[1] <- sum(v1),
+  sum[2] <- sum(v2))
+sum
+
+```
+
+Part b: Using a for loop with a pre-allocated vector to store the results 
+
+```{r}
+premade.vec <- vector(mode = "integer", length = 2)
+
+microbenchmark(
+for (i in 1:1000000){
+  premade.vec[1] = premade.vec[1]+v1[i]
+  premade.vec[2] = premade.vec[2]+v2[i]
+}
+)
+premade.vec
+```
+
+
+Part 3: Using a for loop without pre-allocating a vector to store the result
+
+
+```{r}
+
+microbenchmark(
+for (i in 1:1000000){
+  new.vec[1] = new.vec[1]+v1[i]
+  new.vec[2] = new.vec[2]+v2[i]
+}
+)
+
+```
+
+
+
+
+
