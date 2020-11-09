@@ -3,18 +3,22 @@ title: "hw_09"
 author: "Haley Dylewski"
 date: "10/26/2020"
 output: github_document
+
 ---
 
 
-_________________________________________________________
+Practice in Functions and Programming
+
+
+________________________________________________________
 
 Write functions that compute the variance and skewness of  numeric vector
 
-_________________________________________________________
+________________________________________________________
 
 This function calculates variance of a vector
 
-Given the equation for varience is
+Given the equation for variance is
 Var(x) = (1/n-1)*sum((xi-X)^2, i=1 to n)
 where X is the mean and n is the number of data points
 ```{r}
@@ -28,13 +32,12 @@ i <- 1
 for (i in seq_along(x)){
   var_sum <- var_sum + ((x[i]-X_bar)^2)
 }
-
-Var = (1/(n-1))*sum
+Var <- (1/(n-1))*var_sum
 Var
 }
 
 example <-c(1,2,3,4,5,6,7)
-p<- variance(example)
+p <- variance(example)
 p
 ```
 
@@ -135,7 +138,7 @@ ggplot(top_dest, aes(x = month, y = number_of_flights, color = treatement)) +
 Sample data and function call
 ```{r}
 
-dest_data <- flights %>%
+dest_data <- nycflights13::flights %>%
   group_by(dest,month)%>%
   summarize(number_of_flights = n())
 top_dest <- filter(dest_data, dest == "ORD" | dest == "ATL" | dest == "LAX")
@@ -171,7 +174,7 @@ if (class == "numeric"){
   x <- sort(x)
   
 }else{
- warning("WARNING: Vector of invalid class")
+ warning("WARNING: Vector of invalid class. Must be of character or numerical class")
   x <- x
 }
 
@@ -251,10 +254,12 @@ v2 <-runif(n = 1000000, min = 1, max = 10)
 
 Part a: using vectorized sum().
 ```{r}
+vec_sum <- NA
 microbenchmark(
-  sum[1] <- sum(v1),
-  sum[2] <- sum(v2))
-sum
+  vec_sum[1] <- sum(v1),
+  vec_sum[2] <- sum(v2))
+
+
 
 ```
 
@@ -277,7 +282,7 @@ Part 3: Using a for loop without pre-allocating a vector to store the result
 
 
 ```{r}
-
+new.vec <- NA
 microbenchmark(
 for (i in 1:1000000){
   new.vec[1] = new.vec[1]+v1[i]
@@ -287,7 +292,7 @@ for (i in 1:1000000){
 
 ```
 
-
+Using vectorized sum is much faster than the for loop. Without preallocating memory, the computation is much much slower. 
 
 
 

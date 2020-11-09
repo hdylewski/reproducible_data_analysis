@@ -3,7 +3,10 @@ title: "hw_10"
 author: "Haley Dylewski"
 date: "10/26/2020"
 output: github_document
+
 ---
+
+This document includes fundamental exploration in Linear models and objects and methods.
 
 _____________________________________________________
 
@@ -16,19 +19,21 @@ Part1: Using the diamonds dataset, create a linear model of price as a function 
 library(tidyverse)
 
 
-carrot_weight_mod <- lm(price ~ carat, data = diamonds)
+carat_weight_mod <- lm(price ~ carat, data = diamonds)
 
-cost_1carrot <- carrot_weight_mod$coefficients[2]*1 + carrot_weight_mod$coefficients[1]
-print(paste0("The cost of one carrot is estimated at $", round(cost_1carrot, digits = 2)))
+cost_1carat <- carat_weight_mod$coefficients[2]*1 + carat_weight_mod$coefficients[1]
+
+print(paste0("The cost of one carrot is estimated at $", round(cost_1carat, digits = 2)))
 
 ```
+
+
 Part 2: Now create a linear model of price as a function of carat and color.
 What difference does it make if you convert color to a character vector before you make the model? Note that this is probably what you want to do in general, unless you really know what you’re doing.
 
-model without converion to character first
+model without conversion to character first
 ```{r}
-lm(price ~ color, data = diamonds)
-
+color_mod <- lm(price ~ carat + color, data = diamonds)
 
 ```
 
@@ -36,14 +41,125 @@ After conversion to character
 
 ```{r}
 ch.color <- as.character(diamonds$color)
-lm(price ~ ch.color, data = diamonds)
+color_mod_chr <- lm(price ~ carat + ch.color, data = diamonds)
 
 ```
-The linear regressions change significantly when not converted to a character. This is likely due to the color being stored as a factor, changing the calculation
+The linear regressions change significantly when not converted to a character. This is likely due to the color being stored as a factor and affecting the calculation
+
+
+
+Part 3: Make some plots of the raw data, and of the model fits, to make an argument as to which model is more useful.
+Bonus: Should the data have been pre-processed before making these models?
+
+
+Price vs carrot model and data
+```{r}
+b_price <- carat_weight_mod$coefficients[1]
+m_price <- carat_weight_mod$coefficients[1]
+
+ggplot(diamonds, aes(carat, price)) +
+  geom_abline(aes(intercept = b_price, slope = m_price  )) +
+  geom_point()
+ 
+
+```
+
+
+________________________________________________________
+
+Objects and methods
+
+________________________________________________________
+
+Part 1: Write a function that returns some kind of structured result, which you define as a new S3 class. Your class doesn’t need to be anything fancy, but it should be different from existing classes.
+________________________________________________________
+
+
+The below structure function will store data from a potentiostat(EIS reading) in my lab and add the technician, date, and test condition.
+
+Starting with just one attribute:
+```{r}
+new_EIS_data <- function(df, condition){
+  
+  stopifnot(is.data.frame(df))
+  stopifnot(is.character(condition))
+  attr(df, "condition") <- condition
+  structure(df, class = c("EIS_date", "data.frame"))
+
+}
+```
+Test the constructor function with imported data
+Import data
+```{r}
+EIS_raw_data <- read_csv('C:/Users/hdyle/Documents/Micr_590/reproducible_data_analysis/data/EIS.csv')
+glimpse(EIS_raw_data)
+```
+
 
 ```{r}
+new_EIS_obj <- new_EIS_data(EIS_raw_data, condition = "Control")
+glimpse(new_EIS_obj)
+```
+Looks pretty fine. Now adding in other attributes I ran into some  problems. Please find at the end of document.
+
+
+________________________________________________________
+
+Part 2: Write print and summarize methods for this class. These methods don’t need to be particularly useful, but they should be different from the default methods.
+
+________________________________________________________
+
+Summarize method:
+```{r}
+
+
+summary.EIS_data <- function(EIS_obj){
+  df_sum <- summarize.data.frame(inst_obj)
+  print(paste0("Condition: ", attr(EIS_obj, "condition"), sep = " "))
+  df_sum
+}
+
+summary(new_EIS_obj)
+```
+
+
+Print method
+```{r}
+print.EIS_data <- function(EIS_obj){
+
+  print(paste0("Condition: ", attr(EIS_obj, "condition"), sep = " "))
+  print.data.frame(EIS_obj)
+}
+
+print.EIS_data(new_EIS_obj)
 
 ```
+
+________________________________________________________
+
+_______________________________________________________
+Constructor with Multiple attributes *** HELP!!!***
+I tried to take this assignment further by adding additional attributes, but encountered the below error. If you have any feedback on how to acheive this I would appreciate it. 
+## {r}
+new_EIS_data <- function(df, technician,condition){
+  stopifnot(is.data.frame(df))
+  stopifnot(is.character(technician))
+  stopifnot(is.character(condition))
+  
+  attr(df,"technician", "condition") <- c(technician, condition)
+  
+  structure(df, class = c("EIS_date", "data.frame"))
+
+#}
+
+
+another_EIS_obj <- new_EIS_data(EIS_raw_data, technician = "Haley", condition = "Control")
+glimpse(another_EIS_obj)
+```
+
+I was hoping to create multiple attributes but could not get it to work. I would love some feedback on this! 
+
+
 
 
 

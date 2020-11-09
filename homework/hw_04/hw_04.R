@@ -36,3 +36,4 @@ ggplot(data = chris_data_tidy) +
 ggplot(data = chris_data_tidy) + 
   geom_boxplot(mapping = aes(x= gender, y = number.babies, color = gender))
 
+
