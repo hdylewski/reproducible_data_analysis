@@ -45,9 +45,16 @@ ui <- fluidPage(
                              buttonLabel = "Browse..."),
                    checkboxInput("header", "CSV Header", TRUE),
                    textInput("user_graph_title", "Graph Title", "Title"),
+                   numericInput("user_graph_title_size","Title size", 20),
+                   textInput("user_title_color", "Title Color", "#666666"),
                    textInput("user_x_axis_label", "X-axis Label", "Time"),
                    textInput("user_y_axis_label", "Y-axis Label", 
                              "Numeric Distribution"),
+                   textInput("user_axis_color", "Axis Label Color", "#666666"),
+                   numericInput("user_axis_size", "Axis Label Size", 15),
+                   numericInput("user_xylabel_size", "Axis Text", 12),
+                   radioButtons("user_color_palette", "Choose Color Scheme",c("A","B","C","D"),"D"),
+                   radioButtons("user_stat_choice","Choose Statiscal Method", c("None","T-Test","ANOVA")),
                    submitButton("Update")
                )
         ),
@@ -129,13 +136,24 @@ server <- function(input,output){
                                   names_to = "Time_Points",
                                   values_to = "Number"
         )
-        ggplot(long_data, aes(x = Time_Points, y = Number, color = Sample))+
+        
+        ### ggplot takes many togglable options from the user 
+        ### this allows the user to format the axis titles , Graph title,
+        ### aixs labels, and overall color scheme. All color schemes are cupposed to be color blind friendly
+
+        
+        ggplot(long_data, aes(x = Time_Points, y = Number, color = Sample, group = Sample))+
+            geom_line(linetype = "solid") +
             geom_point() +
-            xlab(input$user_x_axis_label) + ### changes x-axis label to user inpu
-            ylab(input$user_y_axis_label) +
-            ggtitle(input$user_graph_title)
-            
-          
+            xlab(input$user_x_axis_label) + ### x-axis label text
+            ylab(input$user_y_axis_label) + ### y-axis label text
+            ggtitle(input$user_graph_title) + ## Graph title text
+            theme(plot.title = element_text(color = input$user_title_color, ### Graph Title format
+                    face = "bold", size = input$user_graph_title_size, hjust = 0),
+                  axis.title = element_text(color = input$user_axis_color, ### Axis title font and font color
+                                            face = "bold", size = input$user_axis_size),
+                  axis.text.x = element_text(face= "plain", color = "#666666" , size = input$user_xylabel_size))+ ### Axis label size, color is currently hard coded
+        scale_color_viridis(discrete = TRUE, option = input$user_color_palette) ### sets a color blind friendly color pallette
         
     })
 }

@@ -104,22 +104,25 @@ server <- function(input,output){
         read.csv(data$datapath, header = input$header)
     })
     
-    output$csv.plot <- renderPlot({
-        data <- input$data_file
-        ext <- tools::file_ext(data$datapath)
-        
-        req(data)
-        validate(need(ext == "csv", "Please confirm uploaded file extension is saved
-                  in a '.csv' format."))
-        data_1 <- read.csv(data$datapath, header = input$header)
-        long_data <- pivot_longer(data_1,
-                                  cols = !contains('Sample'),
-                                  names_to = "Time_Points",
-                                  values_to = "Number"
-        )
-        ggplot(long_data, aes(x = Time_Points, y = Number))+
-            geom_point()
-    })
+    ### Plot progress so far. The file is successfully connected to file upload.
+    ### The 'data' and 'ext' features can likely be streamlined in the future,
+    ### as they are repetitive, and will be used if we integrate stats as well, 
+    ### or any other tool. req() and validate() as well. 
+    
+    ### The first two steps are straight forward, saving the data as an object.
+    ### This, again, can probably be streamlined later. It stores the uploaded
+    ### file as 'data_1'. It then pivots the data to a long format, taking all
+    ### input columns and shifting them into three columns (Check my hw_09 
+    ### print(long_colony_counts), the output would be the same). The commands 
+    ### will probably need adjusting, but essentially here are the requirements.
+    ### 1. The first data column with data to be compared MUST be named 'Sample'.
+    ###    There are a couple of issues here. '.csv' files can be saved several
+    ###    ways. If you save it as the default, comma delimited file type, this
+    ###    will not work. This is due to the first column being named
+    ###    differently than it appears in a program like excel. Instead of 
+    ###    saving as 'Sample' it will save as 'ï..Sample'. I tried adjusting the
+    ###    code to account for this but got some errors.
+
 }
 
 
