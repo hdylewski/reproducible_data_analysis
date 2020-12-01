@@ -1,0 +1,582 @@
+---
+title: "stats_oneway_only"
+author: "Haley Dylewski"
+date: "11/29/2020"
+output: html_document
+---
+
+---
+title: "Project test code"
+author: "Haley Dylewski"
+date: "11/22/2020"
+output: html_document
+---
+
+
+This is the Statistical analysis code that will be directly added to the app. It is missing th 2-way ANOVA which has some bugs
+
+```{r}
+library(tidyverse)
+library(rstatix)
+library(ggpubr)
+library(viridis)
+library(emmeans)
+library(DescTools)
+```
+
+
+```{r}
+sample_data <- read.csv("C:/Users/hdyle/Documents/Micr_590/reproducible_data_analysis/homework/final_project/sampledata_mod.csv", check.names = FALSE )
+sample_data
+```
+
+For a one way/ pairwise test
+```{r}
+sample_data <- mutate_if(sample_data, is.character, as.factor)
+
+
+
+stat_data <- pivot_longer(sample_data,
+                          cols = !contains('Sample'),
+                          names_to = "Time_points",
+                          values_to = "Number")
+
+```
+
+____________________________________________________________________
+
+Statistical Analysis for incorporation:
+____________________________________________________________________
+
+
+
+
+These will be replaced with user inputs
+```{r}
+groupings <- c("Sample", "Treatment")
+
+input_options <- c("None","T-Test","One Way ANOVA")
+input <- input_options[3]
+post_hoc <- "Tukey"
+```
+
+
+```{r}
+### Format data
+
+
+
+    long_data <- pivot_longer(sample_data,
+                          cols = !contains('Sample'),
+                          names_to = "Time_points",
+                          values_to = "Number")
+  
+
+
+### Convert all characters to factors. This is required for the stats to work
+data_set <- mutate_if(long_data, is.character, as.factor)
+str(data_set)
+
+
+
+### Check for outliers and gt summary statistics. This includes mean and standard deviation
+
+
+
+  outliers <-  data_set %>% 
+    group_by(Time_points,Sample)%>%
+    identify_outliers(Number)
+  sum_stats <- data_set %>%
+    group_by(Time_points,Sample) %>%
+    get_summary_stats(Number, type = "mean_sd")
+ sum_stats
+
+#returns values for assessing pass or fail of these conditions
+#shapirores_result
+#shapirogn_result
+#levene_result
+#if TRUE, passed, if FALSE, failed
+
+
+
+
+
+### Check normality assumptions
+### 
+### returns 2 values shapiro_result (normality) and 
+###levene_result (homogeneity of variances) that will determine the 
+### type fo statistical test you can perform
+ 
+  
+ ### Check normality of each group individually
+ ### Use when few groups with many points
+ ### Here the cutoff is 20 data points per group
+ data_set_length <- length(data_set[[1]])
+ if (data_set_length >= 20){
+  group_norm <- data_set%>%
+    group_by(Sample) %>%
+    shapiro_test(Number) 
+  gncheck <- group_norm$p
+  for (i in seq_along(gncheck)){
+    if (gncheck[i] >0.05){shapiro_result = TRUE
+    }else {
+      shapiro_result = FALSE
+      break
+      }
+    } 
+  }else {
+  ### Check normality of all groups together by analyzing model
+  ### residuals. 
+  ### Use for many groups with few points each. Here it is <20
+
+
+  model <- lm(Number ~ Sample, data = data_set)
+  shapiro <- shapiro_test(residuals(model))  
+  scheck <- shapiro$p.value
+  for (i in seq_along(scheck)){
+    if (scheck[i] >0.05){shapiro_result = TRUE
+    }else {
+      shapiro_result = FALSE
+      break
+      }
+    }
+  }
+ ### homogeneity of variances
+  ## if this is not met, run Welch one-way anova welch_anova_test()
+  ## and must run Games-Howell post hoc or pairwise t-test
+  ## games_howell_test(y~x)
+  levene <- data_set%>% 
+    levene_test(Number ~ Sample) 
+  levcheck <- levene$p
+  for (i in seq_along(levcheck)){
+   if (levcheck[1] >0.05){lev_result = TRUE
+   }else {lev_result = FALSE
+          break
+   }
+  }
+  
+
+
+###Perform statistical analysis
+
+
+### a function to call later that checks for significance after the
+### test is run  
+significance_check <- function(x){
+  sig = FALSE  
+  for (i in seq_along(x)){
+       if(x[i] == '*'){
+          sig = TRUE
+        }
+    }
+  return(sig)
+}
+
+### The value for significance is initially set to FALSE to prevent
+### any accidental carryover from previous calculations
+significance = FALSE
+
+
+ 
+## Do T-test or ANOVA
+
+if(input == "None"){
+  print("No statistical analysis preformed")
+  
+  } else if(input == "T-Test"){
+    print("Pairwise student's T-test with p-value adjusted using Bonferroni method")
+    stat.test <- data_set%>%
+      group_by(Time_points)%>%
+      pairwise_t_test(
+      Number ~ Sample, 
+       p.adjust.method = "bonferroni"
+    )
+    pwc <- stat.test
+    
+     
+  } else if(input == "One Way ANOVA"){
+    
+    ## perform normal anova if levin is true
+    if(levene_result == TRUE){
+      stat.test <- data_set %>% 
+        group_by(Time_points) %>%
+        anova_test(Number ~ Sample)
+      stat.test
+     ## determine if significant
+      stat_check <- stat.test[[7]]
+      stat_check
+      significance <- significance_check(stat_check)  
+    
+      ## post hoc given significant ANOVA
+    if (significance == TRUE){
+          ## Tukey comparisons
+           pwc <- data_set %>% 
+           group_by(Time_points) %>%
+           tukey_hsd(Number ~ Sample)
+
+      } else { print("No significance")} 
+    
+  ## if levene test was failed, use Welch anova
+    }else if ( levene_result == FALSE){
+      stat.test <- data_set %>%
+        group_by(Time_points)%>%
+        welch_anova_test(Number ~ Sample)
+     ## determine if significant
+      stat_check <- stat.test[[7]]
+      significance <- significance_check(stat_check)  
+      
+      ## Games-Howell post hoc given significant ANOVA
+      if (significance == TRUE){
+       pwc <- data_set %>% 
+         group_by(Time_points)%>%
+         games_howell_test(Number ~ Sample)
+      } else { print("No significance")} 
+    }
+          
+
+} 
+
+
+
+```
+
+Return results
+
+```{r}
+print("Test")
+input
+print("shapiro")
+shapiro_result
+print("levene")
+lev_result
+print("Stats")
+str(stat.test)
+print("Significant?")
+significance
+print("Pairwise")
+pwc
+
+
+```
+
+
+____________________________________________________________________
+____________________________________________________________________
+
+Scratch work : Don't look at this
+
+
+
+
+One-way plot
+```{r}
+
+```
+
+
+
+
+```{r}
+pwc_plot <- pwc %>% add_xy_position(x = "Sample")
+
+
+ggplot(data_set, aes(x = "Sample", y = "Number", color = "Treatment")) + 
+  stat_pvalue_manual(pwc_plot, hide.ns = TRUE) +
+  labs(
+    #subtitle = get_test_label(stat.test, detailed = TRUE),
+    caption = get_pwc_label(pwc_plot)
+  )
+```
+
+
+
+WORKING BOXPLOT
+
+```{r}
+pwc_plot <- pwc %>% add_xy_position(x = "Sample")
+
+box_plot <- ggboxplot(data_set, x = "Sample", y = "Number", color = "Time_points") +
+  stat_pvalue_manual(pwc_plot, hide.ns = TRUE) +
+  labs(
+    #subtitle = get_test_label(stat.test, detailed = TRUE),
+    caption = get_pwc_label(pwc_plot),
+   outlier.shape = 8, position = position_dodge(1))  #geom_jitter(shape = 16, position = position_jitter(0.2))
+box_plot
+
+
+
+```
+
+
+
+__________________________________________________________________
+
+```{r}
+  group_norm <- data_set%>%
+    group_by(Sample) %>%
+    shapiro_test(Number) 
+  gncheck <- group_norm$p
+  for (i in seq_along(gncheck)){
+    if (gncheck[i] >0.05){shapirogn_result = TRUE
+    }else {
+      shapirogn_result = FALSE
+      break
+      }
+   }
+```
+
+```{r}
+### Post hoc test given significant ANOVA
+pwc <- data_set %>% tukey_hsd(Number ~ Sample)
+
+## Pairwise analysis, adding x and y info for adding to a box plot
+
+pwc < data_set%>%
+  group_by(groupings[1], groupings[2])%>%
+  
+
+pwc <- data_set%>%
+  tukey_hsd( Number ~ Sample) %>%
+  add_xy_position(x = "Sample")
+
+#### Graph labeling
+### For one way
+pwc_lab <- pwc %>% add_xy_position(x= "Sample")
+  #plot + stat_pvalue_manual(pwc_lab,hide.ns = TRUE) +
+  # labs(
+  # subtitle = get_test_label(stat.test, detailed = TRUE),
+  # caption = get_pxc_label(pwc_lab))
+  
+
+```
+
+
+Pairwise comparisons
+
+```{r}
+t.model<- lm (Number ~ Sample*Time_points, data = data_set)
+data_set%>%
+  emmeans_test(
+    Number ~ Sample,  p.adjust.method = "bonferroni",
+    model = t.model)
+
+```
+
+```{r}
+ data_set%>%
+  pairwise_t_test(
+  Number ~ Sample, 
+   p.adjust.method = "bonferroni"
+)
+```
+
+
+Pairwise analysis, adding x and y info for adding to a box plot
+```{r}
+pwc <- data_set%>%
+  tukey_hsd( Number ~ Sample) %>%
+  add_xy_position(x = "Sample")
+```
+
+One way ANOVA:
+dependent = Number
+Treatment = Sample
+```{r}
+oneway_aov <- data_set %>% anova_test(Number ~ Sample)
+
+
+```
+
+Two way ANOVA"
+dependent = Number
+Treatment1 = Sample
+Treatment2 = Time_points
+Must first check a few asssumptions
+```{r}
+### check for outliers
+data_set %>% 
+  group_by(Sample, Time_points)%>%
+ identify_outliers(Number)
+
+### Check normalty
+twoway_model<- lm(Number ~ Sample*Time_points,
+                  data = data_set)
+shapiro_test(residuals(twoway_model))
+
+### Check normality of groups
+data_set%>%
+  group_by(Sample, Time_points)%>%
+  shapiro_test(Number)
+
+### Homogeneity of variance
+
+data_set %>% levene_test(Number ~ Sample*Time_points)
+
+
+twoway_anova <- data_set %>% anova_test(Number ~ Sample * Time_points)
+
+## can do post-hoc tests
+
+```
+Post-hoct tests
+A significant two-way interaction indicates that the impact that one factor (e.g., education_level) has on the outcome variable (e.g., job satisfaction score) depends on the level of the other factor (e.g., gender) (and vice versa). So, you can decompose a significant two-way interaction into:
+
+Simple main effect: run one-way model of the first variable at each level of the second variable,
+Simple pairwise comparisons: if the simple main effect is significant, run multiple pairwise comparisons to determine which groups are different.
+For a non-significant two-way interaction, you need to determine whether you have any statistically significant main effects from the ANOVA output. A significant main effect can be followed up by pairwise comparisons between groups
+
+
+
+
+
+
+
+Box_plot with p's
+```{r}
+aov <- oneway_aov
+ggboxplot(
+  data_set, x = "Time_points", y = "Number",
+  color = "Sample", palette = "jco") +
+  stat_pvalue_manual(pwc, hide.ns = TRUE)+ 
+  labs (
+  subtitle = get_test_label(aov, detailed = TRUE))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+   melt_long_data <- melt(long_data, id.vars = c('Sample','Time_points'), measure.vars = 'Number')%>%
+  print()
+    
+  ggplot(melt_long_data, aes(x = Time_points, y = value , color = Sample, group = Sample))+
+           geom_line(linetype = "solid") + geom_point() + scale_color_viridis(discrete = TRUE, option = "D")
+    
+```
+
+
+
+
+
+
+
+
+```{r}
+
+
+tests <- long_data %>%
+  group_by(Time_points)%>%
+  t_test()
+ 
+```
+
+Pairwise comparisons
+
+```{r}
+ t.model<- lm (Number ~ Sample*Time_points, data = long_data) 
+long_data%>%
+  emmeans_test(
+    Number ~ Sample,  p.adjust.method = "bonferroni",
+    model = t.model)
+ long_data%>%
+  pairwise_t_test(
+  Number ~ Sample, 
+   p.adjust.method = "bonferroni"
+)
+```
+
+ANOVA
+```{r}
+long_data.aov <- aov(formula = Number ~ Sample + Time_points, data = long_data )
+summary(long_data.aov)
+tukey_hsd(long_data.aov)
+
+
+```
+
+boxplot with T-test values
+```{r}
+pwc <- long_data%>%
+  tukey_hsd( Number ~ Sample) %>%
+  add_xy_position(x = "Sample")
+aov <- long_data %>% anova_test(Number ~ Sample)
+ ggboxplot(
+  long_data, x = "Time_points", y = "Number",
+  color = "Sample", palette = "jco") +
+  stat_pvalue_manual(pwc, hide.ns = TRUE)+ 
+  labs (
+  subtitle = get_test_label(aov, detailed = TRUE))
+
+
+```
+One way anova
+ https://www.datanovia.com/en/lessons/anova-in-r/#post-hoc-tests
+ 
+identify_outliers()
+
+get_summary_stats()
+
+shaoriro test of normality
+  model <- lm( y ~ x, data = )
+  shapiro_test(residuals(model)) want p > 0.05 for noraml dist
+ levene_test ( y~x) homogenety of variances
+ 
+ANOVA:
+ significant p's highlighted with *
+ pairwise comparisons: tukey_hsd()
+
+
+### visualize p-values:
+see the reference link
+
+look at effect of "Sample" on eveey time point. Two way anova
+
+summary stats
+```{r}
+sum_stats <- long_data %>%
+  group_by(Sample) %>%
+  get_summary_stats(Number, type = "mean_sd") %>%
+  print()
+```
+
+
+identify outlines
+```{r}
+long_data %>%
+  group_by(Sample) %>%
+  identify_outliers(Number)
+
+```
+build linear model
+```{r}
+data_lm<- lm(Number ~ Sample, 
+             data = long_data)
+long_data %>%
+  group_by(Time_points)%>%
+  anova_test(Number ~ Sample, error = data_lm)
+
+
+```
+
+
+
+Shapiro -Wilk test of normality
+
+```{r}
+shapiro_test(residuals(data_lm))
+```
+
