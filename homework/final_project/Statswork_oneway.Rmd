@@ -57,7 +57,8 @@ groupings <- c("Sample", "Treatment")
 
 input_options <- c("None","T-Test","One Way ANOVA")
 input <- input_options[3]
-post_hoc <- "Tukey"
+input_post <- c("Tukey", "Dunnett Test")
+post_hoc <- input_post[1]
 ```
 
 
@@ -90,12 +91,8 @@ str(data_set)
     group_by(Time_points,Sample) %>%
     get_summary_stats(Number, type = "mean_sd")
  sum_stats
+data_set_length <- sum_stats$n[1]
 
-#returns values for assessing pass or fail of these conditions
-#shapirores_result
-#shapirogn_result
-#levene_result
-#if TRUE, passed, if FALSE, failed
 
 
 
@@ -111,7 +108,7 @@ str(data_set)
  ### Check normality of each group individually
  ### Use when few groups with many points
  ### Here the cutoff is 20 data points per group
- data_set_length <- length(data_set[[1]])
+
  if (data_set_length >= 20){
   group_norm <- data_set%>%
     group_by(Sample) %>%
