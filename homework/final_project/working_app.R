@@ -4,6 +4,8 @@ library(ggplot2)
 library(shinythemes)
 library(viridis)
 library(shinydashboard)
+library(emmeans)
+library(rstatix)
 
 ui <- dashboardPage(
   
@@ -247,7 +249,7 @@ server <- function(input,output) {
                                 values_to = "Number")
       
       data_set <- mutate_if(long_data_stats, is.character, as.factor)
-      groupings <- groupings <- c("Sample", "Treatment")
+      groupings <- groupings <- c("Sample", "Treatment")## this allows groupings to be set by user if we so desir later rather than hard coded
       
       outliers <-  data_set %>% 
         group_by(groupings[1], groupings[2])%>%
