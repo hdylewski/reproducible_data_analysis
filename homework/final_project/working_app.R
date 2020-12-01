@@ -133,7 +133,7 @@ ui <- dashboardPage(
                h4("Graph Colors and Statistics", align = "center")),
              wellPanel(
                radioButtons("user_color_palette", "Choose Color Scheme",c("A","B","C","D"),"D"),
-               radioButtons("user_stat_choice","Choose Statiscal Method", c("None","T-Test","One Way ANOVA")),
+               radioButtons("user_stat_choice","Choose Statiscal Method", c("None","T-Test","One Way ANOVA", "2 Way ANOVA")),
                submitButton("Update")
              )
       ),
@@ -196,82 +196,158 @@ server <- function(input,output) {
     read.csv(data$datapath, header = input$header, check.names = FALSE)
   })
   
-#### One way statistical analysis so far. Does not yet output a table but the analysis should work
+#### One way statistical analysis so far.
+  ##### Does not yet output a table but the analysis should work
+  ## 1) Data is formatted, characters are converted to factors
+  ## 2) Summary statistics are generated and outliers identified
+  ## 3) Analysis methods assume that data is normal with homogeneous variance.
+  ##    Normality is assessed using the Shapiro-Wilks test. For few groups with 
+  ##    many data points (>20), normality of each group individually is assessed. 
+  ##    For many groups with few data points (<20), normality of all groups 
+  ##    together is assessed by analyzing model (Sample vs Time points) residuals. 
+  ##    Homoegeneity of variances is asseed by levene test.
+  ##    A p- value <0.05 indicates failure of these tests.
+  ##    If these tests fail, the statisical analysis will still run but a 
+  ##    warning will issue
+  ## 4) Statistical analysis is performed based on user choice
+  ##### a) No stats
+  ##### b) T-Test: pairwise students T-test with bonferoni p-value adjustment
+  ##### c) One-way ANOVA: Different types of ANOVA are carried out based on the results
+  #####    of the levene test for homogeneity of variances
+  #####       -> Passed: One-way ANOVA is done. If and significant interactions 
+  #####         were found, pairwise comparisons are done using Tukey's method
+  #####       -> Failed: A Welch ANOVA is performed. If significant, Games-Howell
+  #####         post-hoc test is performed
+  ##### d) Two-way ANOVA: A two-way ANOVA is carried out using Sample and Treatment
+  #####    if data passed the Levene test. Otherwise one way ANOVAS are suggested
+  #####       -> if significant, post hoc pairwise comparison is computed using
+  #####         emmeans_test with bonferroni p-value adjustment, and simple main 
+  #####         effects are computed by one-way ANOVA on data grouped by Sample
+  #####       -> if not significant, pairwise comparisons are carried out using 
+  #####         emmeans test with error based on model
+  #####
+  
+  ## output variables:
+  ## sum_stats = summary statistics including averages, standard deviation, error
+  ## outliers = outlier values
+  ## shapiro_result = TRUE/FALSE Normality of data
+  ## levene_result = TRUE/FALSE Homogeneity of variance
+  ## stat.test = anova result
+  ## pwc = pairwise comparisons post hoc or t-test
+  ## significance = TRUE/FALSE if any significance was found in ANOVA
+  
+  
   output$stat.table <- renderTable({
    
-     ### Format data
-    long_data <- pivot_longer(sample_data,
+  ### Format data and do summary stats. This includes mean and standard deviation
+    if (input$user_stat_choice == "2 Way ANOVA"){
+      long_data_stats <- pivot_longer(sample_data,
+                                cols = !contains('Sample') & !contains("Treatment"),
+                                names_to = "Time_points",
+                                values_to = "Number")
+      
+      data_set <- mutate_if(long_data_stats, is.character, as.factor)
+      groupings <- groupings <- c("Sample", "Treatment")
+      
+      outliers <-  data_set %>% 
+        group_by(groupings[1], groupings[2])%>%
+        identify_outliers(Number)
+      sum_stats <- data_set %>%
+        group_by(groupings[1], groupings[2]) %>%
+        get_summary_stats(Number, type = "mean_sd")
+      
+      
+    }else {
+      long_data_stats <- pivot_longer(sample_data,
                               cols = !contains('Sample'),
                               names_to = "Time_points",
                               values_to = "Number")
-    ### Convert all characters to factors. This is required for the stats to work
-    data_set <- mutate_if(long_data, is.character, as.factor)
+  
+    data_set <- mutate_if(long_data_stats, is.character, as.factor)
    
-    ### Check for outliers and gt summary statistics. This includes mean and standard deviation
     outliers <-  data_set %>% 
       group_by(Time_points,Sample)%>%
       identify_outliers(Number)
     sum_stats <- data_set %>%
       group_by(Time_points,Sample) %>%
       get_summary_stats(Number, type = "mean_sd")
-   
+    }
 
-    ### Check normality assumptions
+  ###  --------- Check normality assumptions  ---------
     data_set_length <- sum_stats$n[1]
-    ### 
-    ### returns 2 values shapiro_result (normality) and 
-    ###levene_result (homogeneity of variances) that will determine the 
-    ### type fo statistical test you can perform
-    
-    
-    ### Check normality of each group individually
-    ### Use when few groups with many points
-    ### Here the cutoff is 20 data points per group
-    
-    if (data_set_length >= 20){
-      group_norm <- data_set%>%
-        group_by(Sample) %>%
-        shapiro_test(Number) 
-      gncheck <- group_norm$p
-      for (i in seq_along(gncheck)){
-        if (gncheck[i] >0.05){shapiro_result = TRUE
-        }else {
-          shapiro_result = FALSE
-          break
+
+    if (input$user_stat_choice == "2 Way ANOVA"){ # two ways
+      if (data_set_length <= 20){
+        model <- lm(Number ~ Sample*Treatment, data = data_set)
+        shapiro <- shapiro_test(residuals(model))  
+        scheck <- shapiro$p.value
+        for (i in seq_along(scheck)){
+          if (scheck[i] >0.05){shapiro_result = TRUE
+          }else {
+            shapiro_result = FALSE
+            break
+          }
         }
-      } 
-    }else {
-      ### Check normality of all groups together by analyzing model
-      ### residuals. 
-      ### Use for many groups with few points each. Here it is <20
-      
-      
-      model <- lm(Number ~ Sample, data = data_set)
-      shapiro <- shapiro_test(residuals(model))  
-      scheck <- shapiro$p.value
-      for (i in seq_along(scheck)){
-        if (scheck[i] >0.05){shapiro_result = TRUE
-        }else {
-          shapiro_result = FALSE
+      }else{
+        group_norm <- data_set%>%
+          group_by(Sample,Treatment) %>%
+          shapiro_test(Number) 
+        gncheck <- group_norm$p
+        for (i in seq_along(gncheck)){
+          if (gncheck[1] >0.05){shapiro_result = TRUE
+          }else {shapiro_result = FALSE
           break
+          }
         }
       }
-    }
-    ### homogeneity of variances
-    ## if this is not met, run Welch one-way anova welch_anova_test()
-    ## and must run Games-Howell post hoc or pairwise t-test
-    ## games_howell_test(y~x)
-    levene <- data_set%>% 
-      levene_test(Number ~ Sample) 
-    levcheck <- levene$p
-    for (i in seq_along(levcheck)){
-      if (levcheck[1] >0.05){lev_result = TRUE
-      }else {lev_result = FALSE
-      break
+      levene <- data_set %>%
+        levene_test(Number ~ Sample*Treatment)
+      levcheck <- levene$p
+      for (i in seq_along(levcheck)){
+        if (levcheck[1] >0.05){lev_result = TRUE
+        }else {lev_result = FALSE
+        break
+        }
       }
-    }
+      
+      
+    }else{ ##one ways
+      if (data_set_length >= 20){
+        group_norm <- data_set%>%
+          group_by(Sample) %>%
+          shapiro_test(Number) 
+        gncheck <- group_norm$p
+        for (i in seq_along(gncheck)){
+          if (gncheck[i] >0.05){shapiro_result = TRUE
+          }else {
+            shapiro_result = FALSE
+            break
+          }
+        } 
+      }else {
+        model <- lm(Number ~ Sample, data = data_set)
+        shapiro <- shapiro_test(residuals(model))  
+        scheck <- shapiro$p.value
+        for (i in seq_along(scheck)){
+          if (scheck[i] >0.05){shapiro_result = TRUE
+          }else {
+            shapiro_result = FALSE
+            break
+          }
+        }
+      }
+      levene <- data_set%>% 
+        levene_test(Number ~ Sample) 
+      levcheck <- levene$p
+      for (i in seq_along(levcheck)){
+        if (levcheck[1] >0.05){lev_result = TRUE
+        }else {lev_result = FALSE
+        break
+        }
+      }
+  }
     
-   ###Perform statistical analysis
+   ### --------- Perform statistical analysis  ---------
     
     ### a function to call later that checks for significance after the
     ### test is run  
@@ -294,7 +370,7 @@ server <- function(input,output) {
     if(input$user_stat_choice == "None"){
       print("No statistical analysis preformed")
       
-    } else if(input$user_stat_choice == "T-Test"){
+    }else if(input$user_stat_choice == "T-Test"){
       print("Pairwise student's T-test with p-value adjusted using Bonferroni method")
       stat.test <- data_set%>%
         group_by(Time_points)%>%
@@ -303,7 +379,7 @@ server <- function(input,output) {
           p.adjust.method = "bonferroni"
         )
       pwc <- stat.test
-    } else if(input == "One Way ANOVA"){
+    }else if(input$user_stat_choice == "One Way ANOVA"){
       
       ## perform normal anova if levin is true
       if(levene_result == TRUE){
@@ -343,7 +419,32 @@ server <- function(input,output) {
       }
       
       
-    } 
+    }else if (input$user_stat_choice == "2 Way ANOVA") {
+      if(levene_result == TRUE){
+        stat.test <- data_set %>% anova_test(Number ~ Sample*Treatment)
+        stat_check <- stat.test[[6]]
+        significance <- significance_check(stat_check) 
+        if (significance == TRUE){
+        ###pairwise comparisons
+          pwc <- data_set %>%
+            group_by(Sample)%>%
+            emmeans_test(Number ~ Treatment, p.adjust.method = "bonferroni")
+        }
+        ##simple main effects 
+        model<- lm(Number ~ Sample*Treatment, data = data_set)
+        main_eff_Treat <- data_set %>%
+          group_by(Sample) %>%
+          anova_test(Number ~ Treatment, error = model)
+        }else if(significance == FALSE){
+          model <- lm(Number ~ Sample*Treatment, data = data_set)
+          pwc <- emmeans_test(Number ~ Treatment, p.adjust.method = "bonferoni", model = model)
+        
+      }else if (levene_result == FALSE){
+          print("Data failed levene test for homogeneity of variances. Consider one-way ANOVAS")
+      }
+    }
+   
+  stat.test 
   })
   
   
