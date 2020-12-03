@@ -1,11 +1,4 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+
 
 library(shiny)
 library(shinydashboard)
@@ -33,7 +26,7 @@ ui <-dashboardPage(
     ## Body content
     dashboardBody(
         tabItems(
-      ####### First tab content
+  #______________________ Dashboard content______________________
             tabItem(tabName = "dashboard",
                     fluidRow(
                         ### Important information panel
@@ -85,36 +78,65 @@ ui <-dashboardPage(
     
         ),## close dashboard tab
             
-    ######### Stats tab content
+  #______________________ Stats tab content______________________
+  
             tabItem(tabName = "statistics",
                     h2("Stats stuff goes here"),
-                    fluidRow(
-                    ### Stats Panel
-                        column(2, offset = 1,
-                               titlePanel(
-                                   h4("Statistics Options", align = "center")),
-                               wellPanel(
-                                   radioButtons("user_stat_choice","Choose Statiscal Method", c("None","T-Test","One Way ANOVA", "2 Way ANOVA")),
-                                   submitButton("Update")
-                               )
+                    sidebarLayout(
+                      sidebarPanel(
+                        titlePanel(
+                            h4("Statistics Options", align = "center")),
+                        wellPanel(
+                            radioButtons("user_stat_choice","Choose Statiscal Method", c("None","T-Test","One Way ANOVA", "2 Way ANOVA")),
+                            submitButton("Update")
                         )
-                    ),
-
-                        fluidRow(
-                          column(2, offset = 1,
-                                 titlePanel(
-                                   h4("Statistical Analysis Results", align = "center")),
-                                 wellPanel(
-                                   textOutput("output$sig")
-                                 ),
-                          column(7,offset = 0,
-                                  h4("Summary statistics", align = "center"),
-                                 tableOutput("sum_stats")                                
-                                 )
-                        )# for output tables etc
+                      ),
+                      mainPanel(
+                        tabsetPanel(      
+                          tabPanel("Data Set",
+                                   tableOutput("data_set")),
+                          tabPanel("Summary", 
+                                   textOutput("output$sig"),
+                                   tableOutput("sum_stats")), 
+                          tabPanel("Pairwise Results", 
+                                   tableOutput("pwc")) 
+                    
+                        )
+                        
                       )
+                    )
+
+                
+                    # fluidRow(
+                    # ### Stats Panel
+                    #     column(2, offset = 1,
+                    #            titlePanel(
+                    #                h4("Statistics Options", align = "center")),
+                    #            wellPanel(
+                    #                radioButtons("user_stat_choice","Choose Statiscal Method", c("None","T-Test","One Way ANOVA", "2 Way ANOVA")),
+                    #                submitButton("Update")
+                    #            )
+                    #     )
+                    # ),
+                    
+                    # 
+                    #     fluidRow(
+                    #       column(2, offset = 1,
+                    #              titlePanel(
+                    #                h4("Statistical Analysis Results", align = "center")),
+                    #              wellPanel(
+                    #                textOutput("output$sig")
+                    #              ),
+                    #       column(7,offset = 0,
+                    #               h4("Summary statistics", align = "center"),
+                    #              tableOutput("sum_stats")                                
+                    #              )
+                    #     )# for output tables etc
+                    #   )
             ),# close second tab
-    ######### Plots tab content
+  
+#______________________ Plots tab content______________________
+
             tabItem (tabName = "plots",
                      h2("This is where plots will go"),
                      fluidRow(       
@@ -251,6 +273,9 @@ server <- function(input, output) {
    stat_results <- reactiveValues()
 
     ## output
+   output$data_set <- renderTable({ 
+     data <- stat_results$data_set 
+     })
    output$sum_stats <- renderTable({
      data <- stat_results$sum_stats
    })
@@ -258,7 +283,7 @@ server <- function(input, output) {
      data <- stat_results$stat.test
    })
    output$pwc <- renderTable({
-     data <- pwc
+     data <- stat_results$pwc
    })
    output$sig <- renderText({
      if (stat_results$sig == TRUE){
@@ -326,16 +351,20 @@ server <- function(input, output) {
                                        names_to = "Time_points",
                                        values_to = "Number")
 
-       stat_results$data_set <- mutate_if(long_data_stats, is.character, as.factor)
-       groupings <- groupings <- c("Sample", "Treatment")## this allows groupings to be set by user if we so desir later rather than hard coded
+       data_set <- mutate_if(long_data_stats, is.character, as.factor)
+  
+       
+        groupings <- groupings <- c("Sample", "Treatment")## this allows groupings to be set by user if we so desir later rather than hard coded
 
-       stat_results$outliers <-  data_set %>%
+       outliers <-  data_set %>%
          group_by(groupings[1], groupings[2])%>%
          identify_outliers(Number)
-       stat_results$sum_stats <- data_set %>%
+       sum_stats <- data_set %>%
          group_by(groupings[1], groupings[2]) %>%
          get_summary_stats(Number, type = "mean_sd")
-      
+       stat_results$sum_stats <- sum_stats
+       stat_results$outliers <- outliers
+       stat_results$data_set <- data_set
 
      }else {
        long_data_stats <- pivot_longer(sample_data(),
@@ -343,33 +372,51 @@ server <- function(input, output) {
                                        names_to = "Time_points",
                                        values_to = "Number")
 
-       stat_results$data_set <- mutate_if(long_data_stats, is.character, as.factor)
-
-       stat_results$outliers <-  data_set %>%
+       data_set <- mutate_if(long_data_stats, is.character, as.factor)
+       
+       if(input$user_stat_choice == "None"){
+         stat_results$sum_stats <- NULL
+         stat_results$outliers <- NULL
+         stat_results$shapiro_result <- NULL
+         stat_results$lev_result <- NULL
+         stat_results$pwc <- NULL
+         stat_results$sig <- NULL
+         stat_results$stat_test <- NULL
+         stat_results$data_set <- data_set
+         
+       } else {
+       outliers <-  data_set %>%
          group_by(Time_points,Sample)%>%
          identify_outliers(Number)
-       stat_results$sum_stats <- data_set %>%
+       sum_stats <- data_set %>%
          group_by(Time_points,Sample) %>%
          get_summary_stats(Number, type = "mean_sd")
+       
+       
+       stat_results$sum_stats <- sum_stats
+       stat_results$outliers <- outliers
+       }
      }
-
+     
 
 
      ###  --------- Check normality assumptions  ---------
      data_set_length <- sum_stats$n[1]
 
      if (input$user_stat_choice == "None"){
-       shapiro_result <- NULL
-       lev_result <- NULL
+    
      }else if (input$user_stat_choice == "2 Way ANOVA"){ # two ways
        if (data_set_length <= 20){
          model <- lm(Number ~ Sample*Treatment, data = data_set)
          shapiro <- shapiro_test(residuals(model))
          scheck <- shapiro$p.value
          for (i in seq_along(scheck)){
-           if (scheck[i] >0.05){shapiro_result = TRUE
+           if (scheck[i] >0.05){
+             shapiro_result = TRUE
+             stat_results$shapiro_result <- shapiro_result
            }else {
              shapiro_result = FALSE
+             stat_results$shapiro_result <- shapiro_result
              break
            }
          }
@@ -379,8 +426,12 @@ server <- function(input, output) {
            shapiro_test(Number)
          gncheck <- group_norm$p
          for (i in seq_along(gncheck)){
-           if (gncheck[1] >0.05){shapiro_result = TRUE
-           }else {shapiro_result = FALSE
+           if (gncheck[1] >0.05){
+             shapiro_result = TRUE
+             stat_results$shapiro_result <- shapiro_result
+           }else {
+             shapiro_result = FALSE
+             stat_results$shapiro_result <- shapiro_result
            break
            }
          }
@@ -389,8 +440,12 @@ server <- function(input, output) {
          levene_test(Number ~ Sample*Treatment)
        levcheck <- levene$p
        for (i in seq_along(levcheck)){
-         if (levcheck[1] >0.05){lev_result = TRUE
-         }else {lev_result = FALSE
+         if (levcheck[1] >0.05){
+           lev_result = TRUE
+           stat_results$lev_result <- lev_result
+         }else {
+           lev_result = FALSE
+           stat_results$lev_result <- lev_result
          break
          }
        }## close 2 way ANOVA
@@ -403,9 +458,12 @@ server <- function(input, output) {
            shapiro_test(Number)
          gncheck <- group_norm$p
          for (i in seq_along(gncheck)){
-           if (gncheck[i] >0.05){shapiro_result = TRUE
+           if (gncheck[i] >0.05){
+             shapiro_result = TRUE
+             stat_results$shapiro_result <- shapiro_result
            }else {
              shapiro_result = FALSE
+             stat_results$shapiro_result <- shapiro_result
              break
            }
          }
@@ -414,9 +472,12 @@ server <- function(input, output) {
          shapiro <- shapiro_test(residuals(model))
          scheck <- shapiro$p.value
          for (i in seq_along(scheck)){
-           if (scheck[i] >0.05){shapiro_result = TRUE
+           if (scheck[i] >0.05){
+             shapiro_result = TRUE
+             stat_results$shapiro_result <- shapiro_result
            }else {
              shapiro_result = FALSE
+             stat_results$shapiro_result <- shapiro_result
              break
            }
          }
@@ -425,15 +486,18 @@ server <- function(input, output) {
          levene_test(Number ~ Sample)
        levcheck <- levene$p
        for (i in seq_along(levcheck)){
-         if (levcheck[1] >0.05){lev_result = TRUE
-         }else {lev_result = FALSE
+         if (levcheck[1] >0.05){
+           lev_result = TRUE
+           stat_results$lev_result <- lev_result
+         }else {
+           lev_result = FALSE
+           stat_results$lev_result <- lev_result
          break
          }
        }
      }
      
-     stat_results$shapiro_result <- shapiro_result
-     stat_results$lev_result <- lev_result
+
 
      ### --------- Perform statistical analysis  ---------
 
@@ -456,7 +520,7 @@ server <- function(input, output) {
      ## Do T-test or ANOVA
 
      if(input$user_stat_choice == "None"){
-       print("No statistical analysis preformed")
+       stat_results$stat_test <- "None"
 
      }else if(input$user_stat_choice == "T-Test"){
        print("Pairwise student's T-test with p-value adjusted using Bonferroni method")
@@ -467,6 +531,9 @@ server <- function(input, output) {
            p.adjust.method = "bonferroni"
          )
        pwc <- stat.test
+       stat_results$stat_test <- stat.test
+       stat_results$pwc <- pwc
+       
      }else if(input$user_stat_choice == "One Way ANOVA"){
 
        ## perform normal anova if levin is true
@@ -474,19 +541,21 @@ server <- function(input, output) {
          stat.test <- data_set %>%
            group_by(Time_points) %>%
            anova_test(Number ~ Sample)
-         stat.test
+         stat_results$stat_test <- stat.test
+         
          ## determine if significant
          stat_check <- stat.test[[7]]
-         stat_check
          significance <- significance_check(stat_check)
-
+         stat_results$sig <- significance
+         
          ## post hoc given significant ANOVA
          if (significance == TRUE){
            ## Tukey comparisons
            pwc <- data_set %>%
              group_by(Time_points) %>%
              tukey_hsd(Number ~ Sample)
-
+           stat_results$pwc <- pwc
+           
          } else { print("No significance")}
 
          ## if levene test was failed, use Welch anova
@@ -494,16 +563,21 @@ server <- function(input, output) {
          stat.test <- data_set %>%
            group_by(Time_points)%>%
            welch_anova_test(Number ~ Sample)
+         stat_results$stat_test <- stat.test
+         
          ## determine if significant
          stat_check <- stat.test[[7]]
          significance <- significance_check(stat_check)
-
+         stat_results$sig <- significance
+         
          ## Games-Howell post hoc given significant ANOVA
          if (significance == TRUE){
            pwc <- data_set %>%
              group_by(Time_points)%>%
              games_howell_test(Number ~ Sample)
-         } else { print("No significance")}
+           stat_results$pwc <- pwc
+           
+         } else { stat_results$pwc <- "None" }
        }
 
 
@@ -512,30 +586,33 @@ server <- function(input, output) {
          stat.test <- data_set %>% anova_test(Number ~ Sample*Treatment)
          stat_check <- stat.test[[6]]
          significance <- significance_check(stat_check)
+         stat_results$sig <- significance
+         stat_results$stat_test <- stat.test
+         
          if (significance == TRUE){
            ###pairwise comparisons
            pwc <- data_set %>%
              group_by(Sample)%>%
              emmeans_test(Number ~ Treatment, p.adjust.method = "bonferroni")
-         }
+           stat_results$pwc <- pwc
+            }
          ##simple main effects
          model<- lm(Number ~ Sample*Treatment, data = data_set)
          main_eff_Treat <- data_set %>%
            group_by(Sample) %>%
            anova_test(Number ~ Treatment, error = model)
+         stat_results$meffects <- main_eff_Treat
+         
        }else if(significance == FALSE){
          model <- lm(Number ~ Sample*Treatment, data = data_set)
          pwc <- emmeans_test(Number ~ Treatment, p.adjust.method = "bonferoni", model = model)
-
+         stat_results$pwc <- pwc
+         
        }else if (levene_result == FALSE){
          print("Data failed levene test for homogeneity of variances. Consider one-way ANOVAS")
        }
      }
-     
-     stat_results$sig <- significance
-     stat_results$stat_test <- stat.test
-     stat_results$pwc <- pwc
-     
+
    })
 
 
