@@ -268,7 +268,7 @@ server <- function(input, output) {
     ### reactive list to store results of the statistical analysis
    stat_results <- reactiveValues()
 
-    ## Formattes user input
+    ## Formates user input
    output$data_set <- renderTable({ 
      data <- stat_results$data_set 
      })
@@ -405,7 +405,7 @@ server <- function(input, output) {
         stat_results$sum_stats <- sum_stats
         stat_results$outliers <- outliers
         stat_results$data_set <- data_set
-
+        data_set_length <- sum_stats$n[1]
       }else {
         long_data_stats <- pivot_longer(sample_data(),
                                         cols = !contains('Sample'),
@@ -436,13 +436,13 @@ server <- function(input, output) {
 
        stat_results$sum_stats <- sum_stats
        stat_results$outliers <- outliers
+       data_set_length <- sum_stats$n[1]
         }
      }
      
 
 
      ###  --------- Check normality assumptions  ---------
-     data_set_length <- sum_stats$n[1]
 
      if (input$user_stat_choice == "None"){
     
