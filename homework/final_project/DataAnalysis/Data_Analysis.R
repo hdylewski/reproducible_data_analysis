@@ -83,28 +83,36 @@ ui <-dashboardPage(
                         
                     ) # close final row
     
-            ),## close dashboard tab
+        ),## close dashboard tab
             
-    ######### Second tab content
+    ######### Stats tab content
             tabItem(tabName = "statistics",
                     h2("Stats stuff goes here"),
                     fluidRow(
                     ### Stats Panel
                         column(2, offset = 1,
                                titlePanel(
-                                   h4("Statistics", align = "center")),
+                                   h4("Statistics Options", align = "center")),
                                wellPanel(
                                    radioButtons("user_stat_choice","Choose Statiscal Method", c("None","T-Test","One Way ANOVA", "2 Way ANOVA")),
                                    submitButton("Update")
                                )
-                        ),
+                        )
+                    ),
+
                         fluidRow(
+                          column(2, offset = 1,
+                                 titlePanel(
+                                   h4("Statistical Analysis Results", align = "center")),
+                                 wellPanel(
+                                   textOutput("output$sig")
+                                 ),
                           column(7,offset = 0,
-                                 h4("Summary statistics", align = "center"),
-                                 tableOutput("sum_stats")                                 )
+                                  h4("Summary statistics", align = "center"),
+                                 tableOutput("sum_stats")                                
+                                 )
                         )# for output tables etc
-                        
-                    )#close fluidpage
+                      )
             ),# close second tab
     ######### Plots tab content
             tabItem (tabName = "plots",
@@ -228,6 +236,7 @@ server <- function(input, output) {
     
     
   #__________________ Output table that shows user data input __________  
+    
     output$csv.data <- renderTable({
         data <- sample_data()
     })
@@ -245,6 +254,27 @@ server <- function(input, output) {
    output$sum_stats <- renderTable({
      data <- stat_results$sum_stats
    })
+   output$stat.test <- renderTable({
+     data <- stat_results$stat.test
+   })
+   output$pwc <- renderTable({
+     data <- pwc
+   })
+   output$sig <- renderText({
+     if (stat_results$sig == TRUE){
+       paste("Significance Found")
+     }else{
+       paste("No significance found")
+     }
+   })
+   output$Test <- renderText({
+     if (input$user_stat_choice == "None"){
+       paste("Summary statisics performed")
+     } else{
+       paste(input$user_stat_choice," performed")
+     }
+   })
+  
 
    ################### Do computation   ###################
    ## 1) Data is formatted, characters are converted to factors
@@ -296,16 +326,16 @@ server <- function(input, output) {
                                        names_to = "Time_points",
                                        values_to = "Number")
 
-       data_set <- mutate_if(long_data_stats, is.character, as.factor)
+       stat_results$data_set <- mutate_if(long_data_stats, is.character, as.factor)
        groupings <- groupings <- c("Sample", "Treatment")## this allows groupings to be set by user if we so desir later rather than hard coded
 
-       outliers <-  data_set %>%
+       stat_results$outliers <-  data_set %>%
          group_by(groupings[1], groupings[2])%>%
          identify_outliers(Number)
-       sum_stats <- data_set %>%
+       stat_results$sum_stats <- data_set %>%
          group_by(groupings[1], groupings[2]) %>%
          get_summary_stats(Number, type = "mean_sd")
-      stat_results$sum_stats <- sum_stats
+      
 
      }else {
        long_data_stats <- pivot_longer(sample_data(),
@@ -313,15 +343,14 @@ server <- function(input, output) {
                                        names_to = "Time_points",
                                        values_to = "Number")
 
-      data_set <- mutate_if(long_data_stats, is.character, as.factor)
+       stat_results$data_set <- mutate_if(long_data_stats, is.character, as.factor)
 
-       outliers <-  data_set %>%
+       stat_results$outliers <-  data_set %>%
          group_by(Time_points,Sample)%>%
          identify_outliers(Number)
-       sum_stats <- data_set %>%
+       stat_results$sum_stats <- data_set %>%
          group_by(Time_points,Sample) %>%
          get_summary_stats(Number, type = "mean_sd")
-       stat_results$sum_stats <- sum_stats
      }
 
 
@@ -329,7 +358,10 @@ server <- function(input, output) {
      ###  --------- Check normality assumptions  ---------
      data_set_length <- sum_stats$n[1]
 
-     if (input$user_stat_choice == "2 Way ANOVA"){ # two ways
+     if (input$user_stat_choice == "None"){
+       shapiro_result <- NULL
+       lev_result <- NULL
+     }else if (input$user_stat_choice == "2 Way ANOVA"){ # two ways
        if (data_set_length <= 20){
          model <- lm(Number ~ Sample*Treatment, data = data_set)
          shapiro <- shapiro_test(residuals(model))
@@ -361,7 +393,7 @@ server <- function(input, output) {
          }else {lev_result = FALSE
          break
          }
-       }
+       }## close 2 way ANOVA
 
 
      }else{ ##one ways
@@ -399,6 +431,9 @@ server <- function(input, output) {
          }
        }
      }
+     
+     stat_results$shapiro_result <- shapiro_result
+     stat_results$lev_result <- lev_result
 
      ### --------- Perform statistical analysis  ---------
 
@@ -496,6 +531,11 @@ server <- function(input, output) {
          print("Data failed levene test for homogeneity of variances. Consider one-way ANOVAS")
        }
      }
+     
+     stat_results$sig <- significance
+     stat_results$stat_test <- stat.test
+     stat_results$pwc <- pwc
+     
    })
 
 
