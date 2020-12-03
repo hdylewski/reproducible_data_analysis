@@ -268,6 +268,9 @@ server <- function(input, output) {
     ### reactive list to store results of the statistical analysis
    stat_results <- reactiveValues()
 
+    ### unused output
+    # stat_results$outliers <- NULL
+    
     ## Formattes user input
    output$data_set <- renderTable({ 
      data <- stat_results$data_set 
@@ -293,12 +296,8 @@ server <- function(input, output) {
      }
    })
    
-   output$Test <- renderText({
-     if (input$user_stat_choice == "None"){
-       paste("No further statisics performed ")
-     } else{
-       paste(input$user_stat_choice," performed")
-     }
+   output$Test <- renderText({ 
+       paste(stat_results$stat_type)
    })
    
    output$main.effects <- renderTable({
@@ -371,60 +370,38 @@ server <- function(input, output) {
    ## pwc_type = type of post hoc pairwise comparison done
 
    observe({
+     
+     ### reset all values so there is no carryover
+     ### There may be a better way to do this
+     stat_results$data_set <- NULL
+     stat_results$sum_stats <- NULL
+     stat_results$outliers <- NULL
+     stat_results$shapiro_result <- NULL
+     stat_results$lev_result <- NULL
+     stat_results$pwc <- NULL
+     stat_results$sig <- NULL
+     stat_results$stat_test <- NULL
+     stat_results$stat_type <- input$user_stat_choice
+     stat_results$pwc_type<- NULL
+     stat_results$msg <- NULL
+     stat_results$meffects <- NULL
 
      ### Format data and do summary stats.
      ### Add the results to the stat_results list
-    
-       long_data_stats <- pivot_longer(sample_data(),
+      long_data_stats <- pivot_longer(sample_data(),
                                        cols = !contains('Sample') & !contains("Treatment"),
                                        names_to = "Time_points",
                                        values_to = "Number")
        
        data_set <- mutate_if(long_data_stats, is.character, as.factor) 
        stat_results$data_set <- data_set
+       
      
-       
-
-       if (input$user_stat_choice == "2 Way ANOVA"){
-         long_data_stats <- pivot_longer(sample_data(),
-                                         cols = !contains('Sample') & !contains("Treatment"),
-                                         names_to = "Time_points",
-                                         values_to = "Number")
-        
-         data_set <- mutate_if(long_data_stats, is.character, as.factor)
-      
-      
-         groupings <- groupings <- c("Sample", "Treatment")## this allows groupings to be set by user if we so desir later rather than hard coded
-      
-        outliers <-  data_set %>%
-          group_by(groupings[1], groupings[2])%>%
-          identify_outliers(Number)
-        sum_stats <- data_set %>%
-          group_by(groupings[1], groupings[2]) %>%
-          get_summary_stats(Number, type = "mean_sd")
-        stat_results$sum_stats <- sum_stats
-        stat_results$outliers <- outliers
-        stat_results$data_set <- data_set
-
-      }else {
-        long_data_stats <- pivot_longer(sample_data(),
-                                        cols = !contains('Sample'),
-                                       names_to = "Time_points",
-                                       values_to = "Number")
-       
-        data_set <- mutate_if(long_data_stats, is.character, as.factor)
-
+    #set results to NULL if no stats chosen
        if(input$user_stat_choice == "None"){
-         stat_results$sum_stats <- NULL
-         stat_results$outliers <- NULL
-         stat_results$shapiro_result <- NULL
-         stat_results$lev_result <- NULL
-         stat_results$pwc <- NULL
-         stat_results$sig <- NULL
-         stat_results$stat_test <- NULL
          stat_results$stat_type <- "No analysis performed"
-         stat_results$pwc_type<- NULL
-
+         
+         #perform summary stats
        } else {
        outliers <-  data_set %>%
          group_by(Time_points,Sample)%>%
@@ -436,7 +413,6 @@ server <- function(input, output) {
 
        stat_results$sum_stats <- sum_stats
        stat_results$outliers <- outliers
-        }
      }
      
 
@@ -607,7 +583,7 @@ server <- function(input, output) {
            welch_anova_test(Number ~ Sample)
          stat_results$stat_test <- stat.test
          stat_results$stat_msg <- "Failed Levene's test, Welch ANOVA performed"
-         
+         stat_results$stat_type <- "Welch One Way ANOVA"
          ## determine if significant
          stat_check <- stat.test[[7]]
          significance <- significance_check(stat_check)
@@ -660,8 +636,6 @@ server <- function(input, output) {
 
    })
    
-   ### generate user friendly 
-
 
     
     
